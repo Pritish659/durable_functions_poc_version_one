@@ -1,6 +1,6 @@
 import azure.functions as func
 import azure.durable_functions as df
-
+import json
 myApp = df.DFApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 # An HTTP-Triggered Function with a Durable Functions Client binding
@@ -15,13 +15,25 @@ async def http_start(req: func.HttpRequest, client):
 # Orchestrator
 @myApp.orchestration_trigger(context_name="context")
 def hello_orchestrator(context):
-    result1 = yield context.call_activity("hello_activity", "Seattle")
-    result2 = yield context.call_activity("hello_activity", "Tokyo")
-    result3 = yield context.call_activity("hello_activity", "London")
+    # test = print(context.get_input('config/params.json'))
+    with open('config/params.json') as f:
+        data = json.load(f)
+    result1 = yield context.call_activity("hello_city", "Bengaluru")
+    result2 = yield context.call_activity("hello_state", "Karnataka")
+    result3 = yield context.call_activity("hello_country", "India")
+    return [result1, result2, result3, data[0]["customer1"]]
 
-    return [result1, result2, result3]
-
-# Activity
+# Activity function 1
 @myApp.activity_trigger(input_name="city")
-def hello_activity(city: str):
+def hello_city(city: str):
     return f"Hello from PhData {city}"
+
+# Activity function 2
+@myApp.activity_trigger(input_name="state")
+def hello_state(state: str):
+    return f"Hello from PhData {state}"
+
+# Activity function 3
+@myApp.activity_trigger(input_name="country")
+def hello_country(country: str):
+    return f"Hello from PhData {country}"
