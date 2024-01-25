@@ -14,33 +14,54 @@ async def http_start(req: func.HttpRequest, client):
 
 # Orchestrator
 @myApp.orchestration_trigger(context_name="context")
-def hello_orchestrator(context):
-    # test = print(context.get_input('config/params.json'))
+def customer_list_orchestrator(context):
+    """List all customers and call another orchestrator
+    to process further for each customer parallelly"""
     path = 'config/params.json'
     list_of_customers = yield context.call_activity("list_customers",path)
-    result1 = yield context.call_activity("hello_city", "Bengaluru")
-    result2 = yield context.call_activity("hello_state", "Karnataka")
-    result3 = yield context.call_activity("hello_country", "India")
-    return [result1, result2, result3, list_of_customers]
+    tasks_customers = []
+    for customer in list_of_customers:
+        tasks_customers.append(context.call_sub_orchestrator(name="customer_orchestrator",input_=customer))
+    customers = yield context.task_all(tasks_customers)
+    return customers
 
-# list the customers
+
 @myApp.activity_trigger(input_name="path")
 def list_customers(path: str):
+    """Get the list of customers with their config"""
     with open(path) as f:
         customer_list = json.load(f) 
-    return f"{customer_list}"
+    return customer_list
 
-# Activity function 1
-@myApp.activity_trigger(input_name="city")
-def hello_city(city: str):
-    return f"Hello from PhData {city}"
+# Sub Orchestrator
+@myApp.orchestration_trigger(context_name="context")
+def customer_orchestrator(context):
+    """Get all open tickets for a customer and
+    call another orchestrator for further processing"""
+    input_ = context.get_input()
+    list_of_open_tickets = yield context.call_activity("customer_details",input_)
+    task_tickets = []
+    for ticket in list_of_open_tickets:
+         task_tickets.append(context.call_sub_orchestrator(name="ticket_orchestrator",input_=ticket))
+    ticket_ids = yield context.task_all(task_tickets)
+    return ticket_ids
 
-# Activity function 2
-@myApp.activity_trigger(input_name="state")
-def hello_state(state: str):
-    return f"Hello from PhData {state}"
 
-# Activity function 3
-@myApp.activity_trigger(input_name="country")
-def hello_country(country: str):
-    return f"Hello from PhData {country}"
+@myApp.activity_trigger(input_name="customer")
+def customer_details(customer: str):
+    """Get all open tickets"""
+    return customer["tickets"]
+
+# Sub-Sub Orchestrator
+@myApp.orchestration_trigger(context_name="context")
+def ticket_orchestrator(context):
+    """Process one ticket detail at a time"""
+    input_ = context.get_input()
+    ticket_id = yield context.call_activity("ticket_details",input_)
+    return ticket_id
+
+
+@myApp.activity_trigger(input_name="ticket")
+def ticket_details(ticket: str):
+    """Get ticket_id for an id"""
+    return ticket["ticket_id"]

@@ -1,14 +1,30 @@
 [
     {
-        "customer1":{
-            "key1":"value1",
-            "key2":"value2"
+      "id": 1,
+      "name": "Customer A",
+      "tickets": [
+        {
+          "ticket_id": 101,
+          "description": "Issue with product X"
+        },
+        {
+          "ticket_id": 102,
+          "description": "Need assistance with installation"
         }
+      ]
     },
     {
-        "customer2":{
-        "key1":"value12",
-        "key2":"value22"
+      "id": 2,
+      "name": "Customer B",
+      "tickets": [
+        {
+          "ticket_id": 201,
+          "description": "Request for software update"
+        },
+        {
+          "ticket_id": 202,
+          "description": "Billing inquiry"
         }
+      ]
     }
 ]
