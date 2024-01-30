@@ -1,5 +1,1 @@
-
-This is for dev
-=======
-This is a test readme for dev environment.
-
+This is a working prototype of the standard workflow using Azure Durable function
